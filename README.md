@@ -1,6 +1,6 @@
 # LLM Long-Term Memory Assistant
 
-A Python-based AI assistant that explores how long-term memory can be integrated into Large Language Model (LLM) applications.
+ A Python project exploring long-term memory architectures for Large Language Model (LLM) applications using the Google Gemini API.
 
 I built this project to deepen my understanding of the architecture behind modern AI systems. As a Product Leader building AI-enabled products, I believe it's increasingly important to understand not only what AI can do, but also how these systems are designed and implemented.
 

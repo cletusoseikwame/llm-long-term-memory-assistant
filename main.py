@@ -155,15 +155,13 @@ def main():
 
         relevant_memories = store.search(user_prompt,k=3)
         prompt = build_prompt(system_prompt, relevant_memories, recent_messages)
-        print("\n========== PROMPT ==========")
-        print(prompt)
-        print("============================\n")
         ai_response = get_response(prompt)
         print(ai_response)
         update_conversation(conversation, "assistant", ai_response)
 
 if __name__ == "__main__":
     main()
+
             
 
 

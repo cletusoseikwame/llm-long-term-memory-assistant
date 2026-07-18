@@ -1,103 +1,127 @@
-# LLM Long-Term Memory Assistant
+# LLM Semantic Memory Assistant
 
- A Python project exploring long-term memory architectures for Large Language Model (LLM) applications using the Google Gemini API.
+This project is part of my AI engineering learning journey.
 
-I built this project to deepen my understanding of the architecture behind modern AI systems. As a Product Leader building AI-enabled products, I believe it's increasingly important to understand not only what AI can do, but also how these systems are designed and implemented.
+As a Product Leader, I wanted to go beyond simply calling an LLM API and actually understand how applications like ChatGPT manage memory. Rather than using an existing framework, I decided to build the memory pipeline myself, one step at a time, so I could understand the engineering decisions behind it.
 
-Rather than simply integrating an LLM API, I wanted to build the memory pipeline myself—from storing facts to retrieving relevant information and constructing prompts—so I could better understand the engineering decisions behind intelligent assistants.
-
-This project is being developed incrementally, with each version introducing a new AI engineering concept.
+Every version of this project introduces a new concept. The goal isn't just to build a chatbot—it's to understand how modern AI applications are designed under the hood.
 
 ---
 
-# Current Features
+## Current Features
 
-The current implementation includes:
+The assistant currently supports:
 
-* Conversational chatbot powered by Google's Gemini API
-* Conversation history management
-* Fact extraction from user messages
-* Keyword extraction with stop-word filtering
-* Long-term memory storage
-* Duplicate memory detection
-* Keyword-based memory retrieval
-* Dynamic prompt construction using:
-
-  * System instructions
-  * Recent conversation history
-  * Retrieved memories
-* Secure API key management using `.env`
-* Git version control
+- Conversational chatbot powered by Google Gemini
+- Conversation history
+- AI-powered memory extraction
+- Automatic importance scoring
+- Persistent long-term memory using JSON
+- Semantic memory retrieval using Sentence Transformers
+- Embedding-based similarity search
+- Duplicate memory detection
+- Dynamic prompt construction using:
+  - System instructions
+  - Recent conversation history
+  - Relevant long-term memories
+- Secure API key management using `.env`
 
 ---
 
-# How It Works
+## How It Works
 
-For every user message, the assistant follows this pipeline:
+Every time the user sends a message, the assistant follows this process:
 
 ```text
 User Message
-        ↓
+      │
+      ▼
 Update Conversation
-        ↓
-Select Recent Messages
-        ↓
-Extract Facts
-        ↓
-Assign Importance
-        ↓
+      │
+      ▼
+Extract Long-Term Memories (Gemini)
+      │
+      ▼
+Validate Memory
+      │
+      ▼
 Store Memory
-        ↓
-Extract Keywords
-        ↓
-Search Long-Term Memory
-        ↓
+      │
+      ▼
+Generate Embeddings
+      │
+      ▼
+Semantic Memory Search
+      │
+      ▼
+Retrieve Relevant Memories
+      │
+      ▼
 Build Prompt
-        ↓
-Send to Gemini
-        ↓
-Generate Response
+      │
+      ▼
+Generate Response (Gemini)
 ```
 
-The current version retrieves memories using keyword matching. Future iterations will introduce semantic retrieval using embeddings and vector databases.
+Instead of relying on keyword matching, memories are converted into vector embeddings using Sentence Transformers.
+
+When a new question is asked, the assistant searches for memories that are semantically similar to the user's query before sending the final prompt to Gemini.
+
+This means the assistant can retrieve memories based on meaning rather than exact words.
 
 ---
 
-# Tech Stack
+## Example
 
-* Python 3
-* Google Gemini API
-* python-dotenv
-* Git & GitHub
+User:
+
+> My dream is to work for a big tech company and earn a six-figure salary.
+
+The memory extractor produces:
+
+```json
+[
+  {
+    "fact": "Dreams of working for a big tech company.",
+    "importance": 8
+  },
+  {
+    "fact": "Aims to earn a six-figure salary.",
+    "importance": 8
+  }
+]
+```
+
+Later...
+
+User:
+
+> What is my dream?
+
+The assistant retrieves the relevant memories and answers correctly, even after restarting the application.
 
 ---
 
-# Why I Built This
+## Tech Stack
 
-The next generation of AI Product Leaders will need more than an understanding of user needs and business strategy—they'll also need a solid grasp of how AI systems are engineered.
-
-This project is part of my effort to build that technical depth by implementing the core building blocks behind LLM-powered applications, including:
-
-* Prompt engineering
-* Conversation management
-* Long-term memory
-* Retrieval pipelines
-* Context management
-* LLM application architecture
-
-My goal is to become a stronger product leader by understanding the technical trade-offs involved in designing and building AI products.
+- Python
+- Google Gemini API
+- Sentence Transformers
+- PyTorch
+- NumPy
+- python-dotenv
 
 ---
 
-# Running the Project
+## Running the Project
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/Cletjunior/llm-long-term-memory-assistant.git
+git clone https://github.com/cletusoseikwame/llm-long-term-memory-assistant.git
 ```
 
-Navigate into the project:
+Move into the project:
 
 ```bash
 cd llm-long-term-memory-assistant
@@ -111,11 +135,19 @@ python3 -m venv .venv
 
 Activate it:
 
+macOS/Linux
+
 ```bash
 source .venv/bin/activate
 ```
 
-Install dependencies:
+Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -127,63 +159,81 @@ Create a `.env` file:
 GEMINI_API_KEY=your_api_key_here
 ```
 
-Run the application:
+Run the assistant:
 
 ```bash
-python3 main.py
+python main.py
 ```
 
 ---
 
-# Roadmap
+## Project Roadmap
 
-## Version 1 ✅
+### Version 1 ✅
 
-* Conversation history
-* Keyword-based memory retrieval
-* Prompt construction
-* Long-term memory storage
+- Gemini chatbot
+- Conversation history
+- Long-term memory
+- Keyword-based memory retrieval
 
-## Version 2 🚧
+### Version 2 ✅
 
-* AI-generated fact extraction
-* AI-generated importance scoring
-* Persistent memory using JSON
+- AI-powered memory extraction
+- Automatic importance scoring
+- JSON persistence
+- Sentence Transformer embeddings
+- Semantic memory retrieval
 
-## Version 3
+### Version 3
 
-* SQLite memory storage
-* Memory editing and deletion
-* Memory summarisation
+- ChromaDB integration
+- Semantic duplicate detection
+- Memory editing and deletion
 
-## Version 4
+### Version 4
 
-* Embeddings
-* Semantic similarity search
-* Vector database integration
-
-## Version 5
-
-* Retrieval-Augmented Generation (RAG)
-* Hybrid keyword and semantic search
-* Production-ready memory architecture
+- Retrieval-Augmented Generation (RAG)
+- Document ingestion
+- External knowledge retrieval
 
 ---
 
-# Future Improvements
+## What I Learned
 
-* Modular project architecture
-* Unit testing
-* Logging
-* Configuration management
-* Streaming responses
-* Web interface (Streamlit/Gradio)
-* Multi-user support
+Building this project helped me understand much more than how to call an LLM API.
+
+Some of the concepts I explored include:
+
+- Prompt engineering
+- Long-term memory architectures
+- Semantic search
+- Vector embeddings
+- Similarity search
+- JSON persistence
+- Object-oriented design
+- Separating responsibilities across components
+- Building AI systems incrementally
 
 ---
 
-# About Me
+## Why I Built This
 
-I'm a Product Leader passionate about building AI-enabled products. Alongside leading product strategy and delivery, I build practical AI projects to deepen my understanding of the engineering behind modern AI systems.
+I'm interested in becoming a stronger AI Product Leader.
 
-My goal is to combine strong product thinking with technical depth to design, build, and lead world-class AI products.
+For me, that means understanding both product strategy and the engineering behind AI products. Building projects like this helps me better understand the trade-offs involved in designing intelligent systems and makes it much easier to collaborate with engineers.
+
+Rather than following tutorials end-to-end, I prefer building projects from first principles and adding one concept at a time until I understand how everything fits together.
+
+---
+
+## Next Goal
+
+The next step is to extend this project into a Retrieval-Augmented Generation (RAG) system by allowing the assistant to retrieve information from external documents instead of relying only on conversational memory.
+
+---
+
+## About Me
+
+I'm a Product Leader with a growing interest in AI engineering.
+
+I'm learning Python and modern AI engineering by building practical projects that help me understand how intelligent systems are designed, with the goal of becoming a more technical product leader capable of building and leading AI products.

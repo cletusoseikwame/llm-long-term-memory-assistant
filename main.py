@@ -1,4 +1,6 @@
 import os
+import json
+from memory_store import MemoryStore
 from dotenv import load_dotenv
 from google import genai
 load_dotenv()
@@ -11,7 +13,8 @@ if not api_key:
 client = genai.Client(api_key=api_key)
 
 conversation = []
-memory_database = []
+store = MemoryStore()
+store.load()
 
 def update_conversation(conversation, role, content):
     conversation.append({
@@ -19,85 +22,71 @@ def update_conversation(conversation, role, content):
         "content": content,
     })
 
-    return conversation
-
 def select_recent_messages(conversation, number_of_messages):
     return conversation[- number_of_messages:]
 
-def extract_facts(messages):
-    extracted_facts =[]
-    for message in messages:
-        if message["role"]=="user":
-            extracted_facts.append({
-                "fact":message["content"]
-            })
-    return extracted_facts
+
+def extract_memories(user_prompt):
+    if user_prompt.strip().endswith("?"):
+        return []
+
+    extraction_prompt = f"""
+    You are a memory extraction system.
+
+    Identify long-term personal information from the user's message.
+
+    Rules:
+    - Extract only information useful in future conversations.
+    - Ignore questions, greetings, requests, and general conversation.
+    - Split multiple facts into separate atomic memories.
+    - Each memory must contain exactly one fact.
+    - Assign an integer importance score from 1 to 10.
+    - Return only valid JSON.
+    - Return [] if nothing should be remembered.
+
+    Required format:
+
+    [
+        {{
+        "fact": "Lives in Glasgow",
+        "importance": 8
+        }}
+    ]
+
+    User message:
+    {user_prompt}      
+    """
+    try:
+        response = client.models.generate_content(
+            model = "gemini-2.5-flash",
+            contents = extraction_prompt,
+            config={
+                "response_mime_type": "application/json",
+            },
+            )
+        return json.loads(response.text)
+
+    except Exception as error:
+        print(f"Memory extraction failed {error}")
+        return []
 
 
 
-def rate_importance(facts):
-    rated_importance =[]
-    for fact in facts:
-        rated_importance.append({
-            "fact":fact["fact"],
-            "importance": 5,
-        })
-    return rated_importance
-
-def store_memory(memory_database, rated_facts):
-    for fact in rated_facts:
-        Found = False
-
-        for memory in memory_database:
-            if memory["fact"]==fact["fact"]:
-                Found = True
-
-        if not Found:
-            memory_database.append(fact)
-    return memory_database
         
-#keyword extractor
-#It also removes stopwords
-def extract_keywords(user_prompt):
-    stop_words = ["a", "an", "the","is","are","you","my","for","to","can"]
-    keywords = []
-
-    for word in user_prompt.lower().split():
-        word = word.replace(".","")
-        word = word.replace(",","")
-        word = word.replace("?","")
-        word = word.replace("!","")
-        if word not in stop_words:
-            keywords.append(word)
-
-
-    return keywords
-
-
-def search_memory(memory_database, keywords):
-    relevant_memories = []
-    for memory in memory_database:
-        for keyword in keywords:
-            if keyword.lower() in memory["fact"].lower():
-                relevant_memories.append(memory)
-                break
-    return relevant_memories
-
-
 
 #We need these functions to build the prompt
 #These functions just format the dictionaries so that we're not passing them directly to gemini
 
 
 def format_conversations(recent_messages):
-    formated_conversations = "\n".join(f"{message['role']}: {message['content']}"
+    formatted_conversations = "\n".join(f"{message['role']}: {message['content']}"
      for message in recent_messages )
-    return  formated_conversations
+    return  formatted_conversations
 
 def format_memories(relevant_memories):
-    formated_memories = "\n".join(f"- {memory['fact']}(importance:{memory['importance']})"
+    formatted_memories = "\n".join(f"- {memory['fact']} (importance: {memory['importance']})"
     for memory in relevant_memories)
-    return formated_memories
+    return formatted_memories
 
 
 def build_prompt(system_prompt, relevant_memories, recent_messages):
@@ -133,26 +122,48 @@ def get_response(prompt):
 
 
 #invoking all the function
+def main():
+    while True:
+        user_prompt = input("You: ")
+        if user_prompt.lower() == "quit":
+            break
 
-while True:
-    user_prompt = input("You: ")
-    if user_prompt.lower() == "quit":
-        break
+        system_prompt = """
+        You are the smartest AI engineering tutor and AI engineering expert in the world.
 
-    system_prompt = "You are the smartest AI engineering tutor and AI engineering expert in the world"
-    conversation = update_conversation(conversation, "user", user_prompt)
-    recent_messages = select_recent_messages(conversation, 10)
-    facts = extract_facts(recent_messages)
-    important_facts = rate_importance(facts) 
-    memory_database = store_memory(memory_database, important_facts)
-    extracted_keywords = extract_keywords(user_prompt)
-    relevant_memories = search_memory(memory_database, extracted_keywords)
-    prompt = build_prompt(system_prompt, relevant_memories, recent_messages)
+        Use the relevant memories provided in the prompt when they help answer the user's question.
+        Treat those memories as known facts about the user.
+        Do not say you lack memory when a relevant memory is provided. 
+        """
+        update_conversation(conversation, "user", user_prompt)
+        recent_messages = select_recent_messages(conversation, 10)
     
-    ai_response = get_response(prompt)
-    print(ai_response)
-    conversation = update_conversation(conversation, "assistant", ai_response)
+        extracted_memories = extract_memories(user_prompt)
+    
+        for memory in extracted_memories:
+            if (
+            isinstance(memory, dict)
+            and isinstance(memory.get("fact"), str)
+            and isinstance(memory.get("importance"), int)
+            and 1 <= memory["importance"] <= 10):
+        
+                store.add_memory(
+                memory["fact"], 
+                memory["importance"]
+            )
+        store.save()
 
+        relevant_memories = store.search(user_prompt,k=3)
+        prompt = build_prompt(system_prompt, relevant_memories, recent_messages)
+        print("\n========== PROMPT ==========")
+        print(prompt)
+        print("============================\n")
+        ai_response = get_response(prompt)
+        print(ai_response)
+        update_conversation(conversation, "assistant", ai_response)
+
+if __name__ == "__main__":
+    main()
             
 
 

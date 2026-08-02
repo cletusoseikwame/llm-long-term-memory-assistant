@@ -1,69 +1,74 @@
-
-import json
-import math
-
+import uuid
+import chromadb
 from sentence_transformers import SentenceTransformer
 
 
 class MemoryStore:
-    def __init__(self, file_name="memories.json"):
-        self.store = []
-        self.file_name = file_name
-        self.model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    def __init__(self, database_path="./MemoryStoreChroma_DB"):
+        self.model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
 
-    
+        self.client = chromadb.PersistentClient(
+            path=database_path
+        )
+
+        self.memories_collection = self.client.get_or_create_collection(
+            name="memories"
+        )
+
     def add_memory(self, fact, importance):
-        found = False
-        for memory in self.store:
-            if memory["fact"]== fact:
-                found = True
-                break
+        existing_memory = self.memories_collection.get(
+            where={"fact": fact}
+        )
 
-        if not found:
-            memory_embedding = self.model.encode(fact)
-            self.store.append({
-               "fact":fact,
-                "embedding": memory_embedding.tolist(),
-                "importance": importance
+        if existing_memory["ids"]:
+            return None
 
-            })
-        
-    
-    def calculate_distance(self, vector1,vector2):
-        total=0
-        for index in range(len(vector1)):
-            distance = (vector1[index]-vector2[index])**2
-            total+=distance
-        return math.sqrt(total)
+        memory_id = str(uuid.uuid4())
+        memory_embedding = self.model.encode(fact).tolist()
 
-    
-    def search(self,query,k=3):
-        query_embedding = self.model.encode(query)
-        results =[]
-        for memory in self.store:
-            distance = self.calculate_distance(query_embedding,memory["embedding"])
-            results.append({
-                "fact":memory["fact"],
-                "importance": memory["importance"],
+        self.memories_collection.add(
+            ids=[memory_id],
+            documents=[fact],
+            embeddings=[memory_embedding],
+            metadatas=[
+                {
+                    "fact": fact,
+                    "importance": importance,
+                }
+            ],
+        )
+
+        return memory_id
+
+    def search(self, query, k=3):
+        query_embedding = self.model.encode(query).tolist()
+
+        results = self.memories_collection.query(
+            query_embeddings=[query_embedding],
+            n_results=k,
+            include=["documents", "metadatas", "distances"],
+        )
+
+        matched_documents = results["documents"][0]
+        matched_metadatas = results["metadatas"][0]
+        matched_distances = results["distances"][0]
+
+        clean_results = []
+
+        for document, metadata, distance in zip(
+            matched_documents,
+            matched_metadatas,
+            matched_distances,
+        ):
+            clean_results.append({
+                "fact": document,
+                "importance": metadata["importance"],
                 "distance": distance,
             })
 
-        results.sort(
-            key =lambda item : item["distance"] 
-        )
-        return results[:k]
-
-    
-    def save(self):
-        with open(self.file_name, "w") as file:
-            json.dump(self.store, file, indent=4)
-
-    def load(self):
-        try:
-            with open(self.file_name, "r") as file:
-                self.store = json.load(file)
-        except FileNotFoundError:
-            self.store = []
+        return clean_results
 
 
 if __name__ == "__main__":
@@ -75,18 +80,3 @@ if __name__ == "__main__":
     store.add_memory("I love pizza", 5)
 
     print(store.search("What food do I like?"))
-    print("Memory count:", len(store.store))
-
-
-
-
-
-
-
-
-
-
-
-        
-
-

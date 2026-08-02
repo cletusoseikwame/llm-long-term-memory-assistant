@@ -14,7 +14,7 @@ client = genai.Client(api_key=api_key)
 
 conversation = []
 store = MemoryStore()
-store.load()
+
 
 def update_conversation(conversation, role, content):
     conversation.append({
@@ -125,7 +125,7 @@ def get_response(prompt):
 def main():
     while True:
         user_prompt = input("You: ")
-        if user_prompt.lower() == "quit":
+        if user_prompt.strip().lower() == "quit":
             break
 
         system_prompt = """
@@ -151,7 +151,7 @@ def main():
                 memory["fact"], 
                 memory["importance"]
             )
-        store.save()
+        
 
         relevant_memories = store.search(user_prompt,k=3)
         prompt = build_prompt(system_prompt, relevant_memories, recent_messages)

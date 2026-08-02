@@ -2,7 +2,7 @@
 
 This project is part of my AI engineering learning journey.
 
-As a Product Leader, I wanted to go beyond simply calling an LLM API and actually understand how applications like ChatGPT manage memory. Rather than using an existing framework, I decided to build the memory pipeline myself, one step at a time, so I could understand the engineering decisions behind it.
+As a Product Leader, I wanted to go beyond simply calling an LLM API and understand how applications like ChatGPT manage memory. Rather than using an existing framework, I decided to build the memory pipeline myself, one step at a time, so I could understand the engineering decisions behind it.
 
 Every version of this project introduces a new concept. The goal isn't just to build a chatbot—it's to understand how modern AI applications are designed under the hood.
 
@@ -16,9 +16,10 @@ The assistant currently supports:
 - Conversation history
 - AI-powered memory extraction
 - Automatic importance scoring
-- Persistent long-term memory using JSON
+- Persistent long-term memory using ChromaDB
 - Semantic memory retrieval using Sentence Transformers
 - Embedding-based similarity search
+- Automatic vector embedding generation
 - Duplicate memory detection
 - Dynamic prompt construction using:
   - System instructions
@@ -45,10 +46,10 @@ Extract Long-Term Memories (Gemini)
 Validate Memory
       │
       ▼
-Store Memory
+Generate Embeddings
       │
       ▼
-Generate Embeddings
+Store Memory (ChromaDB)
       │
       ▼
 Semantic Memory Search
@@ -63,11 +64,11 @@ Build Prompt
 Generate Response (Gemini)
 ```
 
-Instead of relying on keyword matching, memories are converted into vector embeddings using Sentence Transformers.
+The assistant uses Sentence Transformers to convert memories and user queries into vector embeddings.
 
-When a new question is asked, the assistant searches for memories that are semantically similar to the user's query before sending the final prompt to Gemini.
+These embeddings are stored in ChromaDB, allowing the assistant to retrieve memories based on semantic similarity rather than keyword matching.
 
-This means the assistant can retrieve memories based on meaning rather than exact words.
+Because ChromaDB is persistent, memories remain available even after the application is restarted.
 
 ---
 
@@ -98,7 +99,7 @@ User:
 
 > What is my dream?
 
-The assistant retrieves the relevant memories and answers correctly, even after restarting the application.
+The assistant retrieves the relevant memory from ChromaDB using semantic search and answers correctly, even after restarting the application.
 
 ---
 
@@ -107,6 +108,7 @@ The assistant retrieves the relevant memories and answers correctly, even after 
 - Python
 - Google Gemini API
 - Sentence Transformers
+- ChromaDB
 - PyTorch
 - NumPy
 - python-dotenv
@@ -184,17 +186,33 @@ python main.py
 - Sentence Transformer embeddings
 - Semantic memory retrieval
 
-### Version 3
+### Version 3 ✅
 
 - ChromaDB integration
-- Semantic duplicate detection
-- Memory editing and deletion
+- Persistent vector database
+- Automatic embedding storage
+- Semantic similarity search
+- Modular memory architecture
 
 ### Version 4
+
+- Intelligent memory updates
+- Semantic duplicate detection
+- Memory conflict resolution
+- Memory consolidation
+
+### Version 5
 
 - Retrieval-Augmented Generation (RAG)
 - Document ingestion
 - External knowledge retrieval
+
+### Version 6
+
+- AI Agents
+- Tool use
+- Planning and reasoning
+- Multi-step task execution
 
 ---
 
@@ -208,8 +226,9 @@ Some of the concepts I explored include:
 - Long-term memory architectures
 - Semantic search
 - Vector embeddings
+- Vector databases
+- ChromaDB
 - Similarity search
-- JSON persistence
 - Object-oriented design
 - Separating responsibilities across components
 - Building AI systems incrementally
@@ -228,7 +247,7 @@ Rather than following tutorials end-to-end, I prefer building projects from firs
 
 ## Next Goal
 
-The next step is to extend this project into a Retrieval-Augmented Generation (RAG) system by allowing the assistant to retrieve information from external documents instead of relying only on conversational memory.
+The next step is to make the assistant's memory more intelligent by allowing it to update existing memories, resolve conflicting information, and make better decisions about what should be remembered over time before expanding into Retrieval-Augmented Generation (RAG).
 
 ---
 
